@@ -1,5 +1,5 @@
 # Bastille API
-This is an API for Bastille which is an open-source system for automating deployment and management of containerized applications on FreeBSD.
+An API for Bastille which is an open-source system for automating deployment and management of containerized applications on FreeBSD.
 
 ## Installation
 
