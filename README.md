@@ -1,4 +1,4 @@
-# Bastille API
+# Launay
 An API for Bastille which is an open-source system for automating deployment and management of containerized applications on FreeBSD.
 
 ## Installation
