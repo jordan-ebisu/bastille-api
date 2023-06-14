@@ -362,7 +362,7 @@ func main() {
 	http.ListenAndServe(":1789", router)
 }
 
-/*
+/*test
 	router.GET("/v1/bastille/list", BastilleList)
 	router.POST("/v1/bastille/bootstrap/:release", BastilleBootstrap)
 	router.POST("/v1/bastille/clone/:target/:newname/:IP", BastilleClone)
