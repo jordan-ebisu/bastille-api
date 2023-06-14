@@ -2,42 +2,16 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
 	"os/exec"
-
-	"github.com/gin-gonic/gin"
 )
 
-/*
-----------------------------------------------------------------------------------------------
+var router *chi.Mux
 
-	type BastileResponse struct {
-		Target  string
-		Release string
-	}
-
-	func BastilleStart(response http.ResponseWriter, router *http.Request) {
-		// bastille start TARGET
-		vars := mux.Vars(router)
-		target := vars["target"]
-		out, err := exec.Command("bastille", "start", target).Output()
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Printf("Executing: bastille start %s\n", target)
-		fmt.Println(string(out))
-
-		response.WriteHeader(http.StatusOK)
-		response.Write([]byte(out))
-	}
-
-----------------------------------------------------------------------------------------------
-*/
-func BastilleStart(c *gin.Context) {
-	target := c.Param("target")
+func BastilleStart(w http.ResponseWriter, r *http.Request) {
+	target := chi.URLParam(r, "target")
 	fmt.Printf("Target is: %s\n", target)
 	out, err := exec.Command("bastille", "start", target).Output()
 
@@ -47,26 +21,25 @@ func BastilleStart(c *gin.Context) {
 	}
 
 	fmt.Printf("Executing: bastille start %s\n", target)
-	fmt.Println(string(out))
+	fmt.Println(out)
 
-	c.JSON(http.StatusOK, string(out))
-
+	w.Write([]byte(out))
 }
 
-func BastilleStop(c *gin.Context) {
-	target := c.Param("target")
-	out, err := exec.Command("bastille", "stop", target).Output()
+func BastilleList(w http.ResponseWriter, r *http.Request) {
+	out, err := exec.Command("bastille", "list", "-a").Output()
 
 	if err != nil {
-		fmt.Println("There was an error with the bastille stop command")
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Executing: bastille stop %s\n", target)
-	fmt.Println(string(out))
+	fmt.Printf("Executing: bastille list -a\n")
+	fmt.Println(out)
 
-	c.JSON(http.StatusOK, string(out))
+	w.Write([]byte(out))
 }
+
+/*
 
 func BastilleRestart(c *gin.Context) {
 	target := c.Param("target")
@@ -84,8 +57,22 @@ func BastilleRestart(c *gin.Context) {
 
 }
 
-/*
-----------------------------------------------------------------------------------------------
+func BastilleDestroy(c *gin.Context) {
+	target := c.Param("target")
+	out, err := exec.Command("bastille", "destroy", target).Output()
+
+	if err != nil {
+		fmt.Println("There was an error with the bastille destroy command")
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Executing: bastille destroy %s\n", target)
+	fmt.Println(string(out))
+
+	c.JSON(http.StatusOK, string(out))
+}
+
+
 
 	func BastillePkg(response http.ResponseWriter, router *http.Request) {
 		// bastille pkg TARGET args
@@ -140,8 +127,7 @@ func BastilleRestart(c *gin.Context) {
 		response.Write([]byte(out))
 	}
 
-----------------------------------------------------------------------------------------------
-*/
+
 func BastilleList(c *gin.Context) {
 	out, err := exec.Command("bastille", "list", "-a").Output()
 
@@ -150,10 +136,26 @@ func BastilleList(c *gin.Context) {
 	}
 
 	fmt.Printf("Executing: bastille list -a\n")
-	fmt.Println(string(out))
-	c.IndentedJSON(http.StatusOK, out)
-}
+	fmt.Println(out)
 
+	c.PureJSON(http.StatusOK, string(out))
+}
+*/
+
+/*
+func BastilleStop(w http.ResponseWriter, r *http.Request) {
+	target := r.URL.Query().Get("target")
+	//out, err := exec.Command("bastille", "stop", "-a").Output()
+
+	//	if err != nil {
+	//		log.Fatal(err)
+	//	}
+
+	//fmt.Printf("Executing: bastille list -a\n")
+	fmt.Println(target)
+
+	w.Write([]byte(target))
+}
 func BastilleUpdate(c *gin.Context) {
 	release := c.Param("release")
 	out, err := exec.Command("bastille", "update", release).Output()
@@ -224,7 +226,7 @@ func BastilleCmd(c *gin.Context) {
 	}
 
 --------------------------------------------------------------------------------------------------------------------
-*/
+
 func BastilleBootstrap(c *gin.Context) {
 	release := c.Param("release")
 	out, err := exec.Command("bastille", "bootstrap", release).Output()
@@ -234,6 +236,21 @@ func BastilleBootstrap(c *gin.Context) {
 	}
 
 	fmt.Printf("Executing: bastille bootstrap %s\n", release)
+	fmt.Println(string(out))
+
+	c.IndentedJSON(http.StatusOK, out)
+}
+
+func BastilleConfig(c *gin.Context) {
+	target := c.Param("target")
+	args := c.Param("args")
+	out, err := exec.Command("bastille", "config", target, args).Output()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Executing: bastille config %s, %s\n", target, args)
 	fmt.Println(string(out))
 
 	c.IndentedJSON(http.StatusOK, out)
@@ -261,7 +278,7 @@ func BastilleBootstrap(c *gin.Context) {
 	}
 
 --------------------------------------------------------------------------------------------------------------------
-*/
+
 func BastilleClone(c *gin.Context) {
 	target := c.Param("target")
 	newname := c.Param("newname")
@@ -291,18 +308,6 @@ func BastilleCreate(c *gin.Context) {
 	fmt.Println(string(out))
 
 	c.IndentedJSON(http.StatusCreated, out)
-}
-
-func BastilleDestroy(c *gin.Context) {
-	target := c.Param("target")
-	out, err := exec.Command("bastille", "destroy", target).Output()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("Executing: bastille destroy %s\n", target)
-	fmt.Println(string(out))
 }
 
 /*----------------------------------------------------------------------------------------------------------------------------
@@ -349,43 +354,36 @@ func BastilleTemplate(response http.ResponseWriter, router *http.Request) {
 func main() {
 	fmt.Println("Starting the Bastille API...")
 
-	router := gin.Default()
+	fmt.Println("Listening on port 1789")
+	router := chi.NewRouter()
 
+	router.Get("/v1/bastille/list", BastilleList)
+	router.Get("/v1/bastille/start/{target}", BastilleStart)
+	http.ListenAndServe(":1789", router)
+}
+
+/*
 	router.GET("/v1/bastille/list", BastilleList)
 	router.POST("/v1/bastille/bootstrap/:release", BastilleBootstrap)
-	/*----------------------------------------------------------------------------------------------------------------------------
-	router.HandleFunc("/v1/bastille/clone/{target}/{newname}/{IP}", BastilleClone).Methods("POST")
-	----------------------------------------------------------------------------------------------------------------------------*/
 	router.POST("/v1/bastille/clone/:target/:newname/:IP", BastilleClone)
-	router.POST("v1/bastille/cmd/:target/:args", BastilleCmd)
-	/*----------------------------------------------------------------------------------------------------------------------------
-	router.HandleFunc("/v1/bastille/config/{target}/{args}", BastilleConfig).Methods("POST")
-	----------------------------------------------------------------------------------------------------------------------------*/
+	router.POST("/v1/bastille/cmd/:target/:args", BastilleCmd)
+	router.POST("/v1/bastille/config/:target/:args", BastilleConfig)
 	router.POST("/v1/bastille/create/:name/:release/:IP", BastilleCreate)
-	/*----------------------------------------------------------------------------------------------------------------------------
+	router.POST("/v1/bastille/destroy/:target", BastilleDestroy)
+
 	router.HandleFunc("/v1/bastille/destroy/{target}", BastilleDestroy).Methods("POST")
 	router.HandleFunc("/v1/bastille/pkg/{target}/install/{args}", BastillePkgInstall).Methods("POST")
 	router.HandleFunc("/v1/bastille/pkg/{target}/upgrade", BastillePkgUpgrade).Methods("POST")
 	router.HandleFunc("/v1/bastille/pkg/{target}/{args}", BastillePkg).Methods("POST")
 	router.HandleFunc("/v1/bastille/rdr/{target}/{proto}/{hostport}/{jailport}", BastilleRdr).Methods("POST")
-	router.HandleFunc("/v1/bastille/restart/{target}", BastilleRestart).Methods("POST")
-	----------------------------------------------------------------------------------------------------------------------------*/
 	router.POST("/v1/bastille/restart/:target", BastilleRestart)
-	/*----------------------------------------------------------------------------------------------------------------------------
 	router.HandleFunc("/v1/bastille/service/{target}/{service}/{args}", BastilleService).Methods("POST")
-	----------------------------------------------------------------------------------------------------------------------------*/
 	router.POST("/v1/bastille/start/:target", BastilleStart)
 	router.POST("/v1/bastille/stop/:target", BastilleStop)
-	/*----------------------------------------------------------------------------------------------------------------------------
 	router.HandleFunc("/v1/bastille/sysrc/{target}/{args}", BastilleSysrc).Methods("POST")
 	router.HandleFunc("/v1/bastille/template/{target}/{project}/{repo}", BastilleTemplate).Methods("POST")
-	----------------------------------------------------------------------------------------------------------------------------*/
 	router.POST("/v1/bastille/update/:release", BastilleUpdate)
-	/*----------------------------------------------------------------------------------------------------------------------------
 	router.HandleFunc("/v1/bastille/sysrc/{target}/{args}", BastilleSysrc).Methods("POST")
-	----------------------------------------------------------------------------------------------------------------------------*/
-	fmt.Println("Listening on port 12345")
+	fmt.Println("Listening on port 1789")
 
-	// http.ListenAndServe(":12345", router)
-	router.Run(":12345")
-}
+	router.Run(":1789")*/
